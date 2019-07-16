@@ -1,0 +1,11 @@
+## Email alert settings
+xpack.notification.email.account:
+  gmail_account:
+    profile: gmail
+    smtp:
+      auth: true
+      starttls.enable: true
+      host: smtp.gmail.com
+      port: 587
+      user: innovationgarage.dualog
+      password: PASSWORD

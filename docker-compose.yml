@@ -1,0 +1,61 @@
+---
+version: '2'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-platinum:6.2.4
+    container_name: elasticsearch
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=127.0.0.1
+      - xpack.security.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - cluster.routing.allocation.disk.watermark.low=1024Mb
+      - cluster.routing.allocation.disk.watermark.high=512Mb
+      - cluster.routing.allocation.disk.watermark.flood_stage=512Mb
+    networks: ['geocloud']
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+  test:
+    build: test
+    container_name: test
+    networks: ['geocloud']
+    volumes:
+      - ./:/app
+  gribindexer:
+    build: grib-indexer
+    container_name: gribindexer
+    networks: ['geocloud']
+    environment:
+      ESURL: "http://elasticsearch:9200"
+    volumes:
+      - ./data/upload:/data
+    ports:
+      - "1028:1028"
+  gribannotator:
+    build: gribannotator
+    container_name: gribannotator
+    networks: ['geocloud']
+    environment:
+      CONFIG: |
+        {
+            "index": "http://gribindexer:1028",
+            "connections": [
+                {"handler": "source", "type": "listen", "address": "tcp:1024"},
+                {"handler": "destination", "type": "listen", "address": "tcp:1025"}
+            ]
+        }
+    ports:
+      - "7024:1024"
+      - "7025:1025"
+
+networks:
+  geocloud:
+    driver: bridge
+
+volumes:
+  esdata:
+    driver: local
