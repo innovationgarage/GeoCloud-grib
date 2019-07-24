@@ -4,7 +4,6 @@ version: '2'
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch-platinum:6.2.4
-    container_name: elasticsearch
     environment:
       - http.host=0.0.0.0
       - transport.host=127.0.0.1
@@ -19,25 +18,17 @@ services:
     volumes:
       - esdata:/usr/share/elasticsearch/data
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-  test:
-    build: test
-    container_name: test
-    networks: ['geocloud']
-    volumes:
-      - ./:/app
-  gribindexer:
-    build: grib-indexer
-    container_name: gribindexer
+  indexer:
+    build: indexer
     networks: ['geocloud']
     environment:
       ESURL: "http://elasticsearch:9200"
     volumes:
-      - ./data/upload:/data
+      - gribdata:/data
     ports:
       - "1028:1028"
-  gribannotator:
-    build: gribannotator
-    container_name: gribannotator
+  annotator:
+    build: annotator
     networks: ['geocloud']
     environment:
       CONFIG: |
@@ -57,5 +48,7 @@ networks:
     driver: bridge
 
 volumes:
+  gribdata:
+    driver: local
   esdata:
     driver: local
