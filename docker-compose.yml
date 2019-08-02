@@ -18,15 +18,28 @@ services:
     volumes:
       - esdata:/usr/share/elasticsearch/data
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+  swagger:
+    image: swaggerapi/swagger-ui
+    ports:
+      - 1029:8080
+    environment:
+      - API_URL=http://localhost:1028/
   indexer:
+    build: gributils
     image: innovationgarage/gributils
     networks: ['geocloud']
     environment:
       ESURL: "http://elasticsearch:9200"
     volumes:
+      - ./gributils:/app
       - gribdata:/data
     ports:
       - "1028:1028"
+  scraper-yr:
+    image: innovationgarage/gributils-scraper-yr
+    environment:
+      INDEXURL: http://indexer:1028
+    networks: ['geocloud']
   annotator:
     image: innovationgarage/gributils-annotator
     networks: ['geocloud']
